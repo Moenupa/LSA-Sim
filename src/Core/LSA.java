@@ -23,27 +23,36 @@ public class LSA {
         }
     }
 
-    public HashMap<String,Node> Nodes;
+    public HashMap<String,Node> Nodes = new HashMap<>();
     public String source;
 
-    public HashMap<String, Integer> Distances ;
-    public PriorityQueue<Dist> Q;
-    public HashSet<String> visited;
-    public HashMap<String, String> Predecessor;
+    public HashMap<String, Integer> Distances = new HashMap<>();
+    public PriorityQueue<Dist> Q = new PriorityQueue<>();
+    public HashSet<String> visited = new HashSet<>();
+    public HashMap<String, String> Predecessor = new HashMap<>();
+
+    public ArrayList<String> text = new ArrayList<>();
 
 
-    public String[] sample={"A: B:5 C:3 D:5 ","B: A:5 C:4 E:3 F:2","C: A:3 B:4 D:1 E:6","D: A:5 C:1 E:3 ","E: B:3 C:6 D:3 F:5 ","F: B:2 E:5"};
+    public String[] sample = {
+        "A: B:5 C:3 D:5 ",
+        "B: A:5 C:4 E:3 F:2",
+        "C: A:3 B:4 D:1 E:6",
+        "D: A:5 C:1 E:3 ",
+        "E: B:3 C:6 D:3 F:5 ",
+        "F: B:2 E:5"
+    };
 
     public void Reset(){
         Distances.clear();
         Predecessor.clear();
         Q.clear();
         visited.clear();
+        text.clear();
         source = null;
     }
 
-    public void Initialize(String path) throws IOException {
-        ArrayList<String> text = new ArrayList<>();
+    public void Initialize(String path) throws Exception {
 
         //Read the file
         Scanner sc = new Scanner(Files.newBufferedReader(Paths.get(path)));
@@ -56,8 +65,10 @@ public class LSA {
             String[] parts = s.split(":", 2);
             String name = parts[0];
             String[] neighbors = parts[1].split(" ");
-            for(String n : neighbors){
+
+            for (String n : neighbors) {
                 //Check if the same edges from different direction are consistent, throw an exception otherwise
+                if (n.isEmpty()) continue;
                 if(Nodes.containsKey(n)){
                     String[] nParts = n.split(":");
                     if(!nParts[0].equals(name))
