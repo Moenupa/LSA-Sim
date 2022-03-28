@@ -8,7 +8,7 @@ import java.util.*;
 
 public class LSA {
 
-    static class Dist implements Comparable<Dist>{
+    static class Dist implements Comparable<Dist> {
         String name;
         int distance;
 
@@ -20,6 +20,14 @@ public class LSA {
         public Dist(String name, int distance){
             this.name = name;
             this.distance = distance;
+        }
+
+        @Override
+        public String toString() {
+            return "Dist{" +
+                    "name='" + name + '\'' +
+                    ", d=" + distance +
+                    '}';
         }
     }
 
@@ -33,8 +41,7 @@ public class LSA {
 
     public ArrayList<String> text = new ArrayList<>();
 
-
-    public String[] sample = {
+    public static String[] sample = {
         "A: B:5 C:3 D:5 ",
         "B: A:5 C:4 E:3 F:2",
         "C: A:3 B:4 D:1 E:6",
@@ -43,16 +50,20 @@ public class LSA {
         "F: B:2 E:5"
     };
 
-    public void Reset(){
+    // reset source but not nodes
+    public void Reset() {
         Distances.clear();
         Predecessor.clear();
         Q.clear();
         visited.clear();
-        text.clear();
         source = null;
     }
 
     public void Initialize(String path) throws Exception {
+        // completely reset, clearing all buffer and reload
+        Reset();
+        text.clear();
+        Nodes.clear();
 
         //Read the file
         Scanner sc = new Scanner(Files.newBufferedReader(Paths.get(path)));
@@ -101,10 +112,12 @@ public class LSA {
         return 0;
     }
 
-    public String SingleStep(){
+    public String SingleStep() {
         if(source == null)
             throw new RuntimeException("Source not set");
-        //Single step of Dijkstra's algorithm
+        if (Q.isEmpty())
+            return "";
+        // Single step of Dijkstra's algorithm
         Dist d = Q.poll();
         assert d != null;
         visited.add(d.name);
@@ -171,11 +184,13 @@ public class LSA {
         return 0;
     }
 
-
-
-
-
-
-
-
+    @Override
+    public String toString() {
+        return "LSA{" +
+                "Distances=" + Distances +
+                ", \nQ=" + Q +
+                ", \nvisited=" + visited +
+                ", \nPredecessor=" + Predecessor +
+                '}';
+    }
 }

@@ -2,6 +2,7 @@ package Core;
 
 import java.awt.*;
 import java.io.File;
+import java.util.Vector;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 
@@ -16,13 +17,11 @@ public class GUI {
     private static final Color WARN = new Color(255, 149, 0);
     private static final Color ERROR = new Color(255, 59, 48);
 
-    private static void createAndShowGUI() {
-        mainFrame = createWindow("LSA Demo", 800, 600);
-
+    private static void createContentPane() {
         // create and set card layouts
         // can shuffle between card1 and card2
         JPanel open = new JPanel(new BorderLayout());
-        JPanel exe = new JPanel(new CardLayout());
+        JPanel exe = new JPanel(new BorderLayout());
         JPanel cards = new JPanel(new CardLayout());
         cards.add("open", open);
         cards.add("exe", exe);
@@ -33,16 +32,27 @@ public class GUI {
         JButton openFile = new JButton("Open File");
         JButton proceed = new JButton("Proceed");
         JTextArea preview = new JTextArea("\n\n\n\nPreview of the file will be shown here.\n\n\n\n");
+
+        // appearance setting
         preview.setEditable(false);
         preview.setBorder(BorderFactory.createCompoundBorder(
                 preview.getBorder(),
                 BorderFactory.createEmptyBorder(10, 10, 10, 10)));
-
         enableButton(proceed, false);
         enableButton(openFile, true);
 
+        // TODO: step and computeAll buttons
+        JComboBox<String> srcSelector = new JComboBox<>();
+        JLabel selectLabel = new JLabel("Select Source: ");
+        JButton step = new JButton("Step");
+        JButton computeAll = new JButton("Compute All");
+        JButton back = new JButton("Return");
+        JTextArea selectPreview = new JTextArea("Source: ");
+        JTextArea stepPreview = new JTextArea();
+        back.setForeground(WARN);
+
+        // bind with actions
         openFile.addActionListener(e -> {
-            enableButton(proceed, false);
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
             fileChooser.addChoosableFileFilter(new FileFilter() {
@@ -61,7 +71,6 @@ public class GUI {
                 file = fileChooser.getSelectedFile();
                 openFile.setText(file.getName());
 
-                lsa.Reset();
                 try {
                     // read&process file and show preview
                     lsa.Initialize(file.getAbsolutePath());
@@ -72,9 +81,14 @@ public class GUI {
                     // enable button to switch page
                     enableButton(proceed, true);
                     openFile.setForeground(PASS);
+                    DefaultComboBoxModel model = new DefaultComboBoxModel(new Vector(lsa.Nodes.keySet()));
+                    srcSelector.setModel( model );
+                    lsa.setSource(String.valueOf(srcSelector.getSelectedItem()));
+                    selectPreview.append(lsa.source);
                 } catch (Exception ex) {
-                    preview.setText("Error when reading the file\nPlease check file format");
+                    preview.setText("\n\nError when parsing the file.\nPlease recheck file format.\n\n");
                     openFile.setForeground(ERROR);
+                    enableButton(proceed, false);
                 }
             }
         });
@@ -82,24 +96,43 @@ public class GUI {
             cl.next(cards);
         });
 
-        // TODO: step and computeAll buttons
-        JButton step = new JButton("Step");
-        JButton computeAll = new JButton("Compute All");
-        JButton back = new JButton("Return");
-        back.setForeground(WARN);
-
         back.addActionListener(e -> {
             cl.next(cards);
+        });
+        srcSelector.addActionListener(e -> {
+            lsa.setSource(
+                    String.valueOf(srcSelector.getSelectedItem())
+            );
+            selectPreview.append(lsa.source);
+            stepPreview.setText("");
+        });
+        step.addActionListener(e -> {
+            String ret = lsa.SingleStep();
+            stepPreview.append("SingleStep Ret: " + ret + "\n");
+            if (!ret.isEmpty())
+                stepPreview.append(lsa.toString() + "\n\n");
+        });
+        computeAll.addActionListener(e -> {
+            lsa.Run();
+            stepPreview.setText(lsa.toString() + "\n\n");
         });
 
         // btn groups and preview groups
         JPanel e_btn_g = new JPanel();
+        e_btn_g.add(selectLabel); e_btn_g.add(srcSelector);
         e_btn_g.add(step); e_btn_g.add(computeAll); e_btn_g.add(back);
 
         JPanel f_btn_g = new JPanel();
         f_btn_g.add(openFile); f_btn_g.add(proceed);
 
-        JPanel e_pre_g = new JPanel();
+        JPanel e_pre_g = new JPanel(new BorderLayout());
+        JScrollPane stepScroll = new JScrollPane(
+                stepPreview,
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+        );
+        e_pre_g.add(selectPreview, BorderLayout.SOUTH);
+        e_pre_g.add(stepScroll, BorderLayout.CENTER);
 
         open.add(f_btn_g, BorderLayout.SOUTH);
         open.add(preview, BorderLayout.CENTER);
@@ -108,8 +141,12 @@ public class GUI {
 
         cl.show(cards, "open");
 
-        mainFrame.add(cards);
+        mainFrame.getContentPane().add(cards);
         mainFrame.setVisible(true);
+    }
+
+    private static void createMenuBar() {
+
     }
 
     private static void enableButton(JButton button, boolean bool) {
@@ -134,6 +171,10 @@ public class GUI {
 
     public static void main(String[] args) {
         lsa = new LSA();
-        javax.swing.SwingUtilities.invokeLater(() -> createAndShowGUI());
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            mainFrame = createWindow("LSA Demo", 800, 600);
+            createContentPane();
+            createMenuBar();
+        });
     }
 }

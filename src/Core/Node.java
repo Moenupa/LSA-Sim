@@ -24,4 +24,12 @@ public class Node {
     public String getName(){
         return name;
     }
+
+    @Override
+    public String toString() {
+        return "Node{" +
+                "name='" + name + '\'' +
+                ", Neighbors=" + Neighbors +
+                '}';
+    }
 }
