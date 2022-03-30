@@ -11,25 +11,20 @@ public class LSA {
     static class Dist implements Comparable<Dist> {
         String name;
         int distance;
+        String prev;
+
+        public Dist(String name, int distance, String prev) {
+            this.name = name;
+            this.distance = distance;
+            this.prev = prev;
+        }
 
         @Override
         public int compareTo(Dist o) {
-            return this.distance - o.distance;
-        }
-
-        public Dist(String name, int distance){
-            this.name = name;
-            this.distance = distance;
-        }
-
-        @Override
-        public String toString() {
-            return "Dist{" +
-                    "name='" + name + '\'' +
-                    ", d=" + distance +
-                    '}';
+            return Integer.compare(this.distance, o.distance);
         }
     }
+
 
     public HashMap<String,Node> Nodes = new HashMap<>();
     public String source;
@@ -105,9 +100,11 @@ public class LSA {
         }
         //Set the distance of the source to 0
         Distances.put(source, 0);
+        visited.add(source);
         //Add neighbors of the source to the queue
         for(String s : Nodes.get(source).Neighbors.keySet()){
-            Q.add(new Dist(s, Nodes.get(source).Neighbors.get(s)));
+            Q.add(new Dist(s, Nodes.get(source).Neighbors.get(s), source));
+            Predecessor.put(s, source);
         }
         return 0;
     }
@@ -120,15 +117,14 @@ public class LSA {
         // Single step of Dijkstra's algorithm
         Dist d = Q.poll();
         assert d != null;
+        if (visited.contains(d.name)) return  SingleStep();
         visited.add(d.name);
+        Distances.put(d.name, d.distance);
+        Predecessor.put(d.name, d.prev);
         for(String s : Nodes.get(d.name).Neighbors.keySet()){
             if(!visited.contains(s)){
                 int newDist = Distances.get(d.name) + Nodes.get(d.name).Neighbors.get(s);
-                if(!Distances.containsKey(s) || newDist < Distances.get(s)){
-                    Distances.put(s, newDist);
-                    Predecessor.put(s, d.name);
-                    Q.add(new Dist(s, newDist));
-                }
+                    Q.add(new Dist(s, newDist, d.name));
             }
         }
         return d.name;
