@@ -2,6 +2,8 @@ package Core;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Vector;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -34,20 +36,19 @@ public class GUI {
         JTextArea preview = new JTextArea("\n\n\n\nPreview of the file will be shown here.\n\n\n\n");
 
         // appearance setting
-        preview.setEditable(false);
+        // preview.setEditable(false);
         preview.setBorder(BorderFactory.createCompoundBorder(
                 preview.getBorder(),
                 BorderFactory.createEmptyBorder(10, 10, 10, 10)));
         enableButton(proceed, false);
         enableButton(openFile, true);
 
-        // TODO: step and computeAll buttons
         JComboBox<String> srcSelector = new JComboBox<>();
         JLabel selectLabel = new JLabel("Select Source: ");
         JButton step = new JButton("Step");
         JButton computeAll = new JButton("Compute All");
         JButton back = new JButton("Return");
-        JTextArea selectPreview = new JTextArea("Source: ");
+        JTextArea selectPreview = new JTextArea("");
         JTextArea stepPreview = new JTextArea();
         back.setForeground(WARN);
 
@@ -58,42 +59,77 @@ public class GUI {
             fileChooser.addChoosableFileFilter(new FileFilter() {
                 @Override
                 public boolean accept(File f) {
-                    return f.getName().matches("\\.lsr$") || f.isDirectory();
+                    return f.getName().matches("\\.lsr\\s*$") || f.isDirectory();
                 }
 
                 @Override
                 public String getDescription() {
-                    return "LSR Files";
+                    return "LSR Files, .lsr";
                 }
             });
-            int option = fileChooser.showOpenDialog(mainFrame);
-            if (option == JFileChooser.APPROVE_OPTION){
+            int option;
+            boolean loadFailed = true;
+            option = fileChooser.showOpenDialog(mainFrame);
+            if (option == JFileChooser.APPROVE_OPTION) {
                 file = fileChooser.getSelectedFile();
                 openFile.setText(file.getName());
 
                 try {
-                    // read&process file and show preview
-                    lsa.Initialize(file.getAbsolutePath());
+                    // read file and show preview
+                    lsa.loadFromFile(file);
                     preview.setText("");
                     for (String line : lsa.text)
                         preview.append(line + "\n");
 
                     // enable button to switch page
                     enableButton(proceed, true);
+
+                    // parse file
+                    lsa.parse();
                     openFile.setForeground(PASS);
-                    DefaultComboBoxModel model = new DefaultComboBoxModel(new Vector(lsa.Nodes.keySet()));
-                    srcSelector.setModel( model );
-                    lsa.setSource(String.valueOf(srcSelector.getSelectedItem()));
-                    selectPreview.append(lsa.source);
-                } catch (Exception ex) {
-                    preview.setText("\n\nError when parsing the file.\nPlease recheck file format.\n\n");
+                } catch (IOException ex) {
                     openFile.setForeground(ERROR);
-                    enableButton(proceed, false);
+                    createPopUpWindow("Read/Write Error.");
+                } catch (IllegalArgumentException ex) {
+                    openFile.setForeground(ERROR);
+                    createPopUpWindow(ex.getMessage());
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
             }
         });
         proceed.addActionListener(e -> {
-            cl.next(cards);
+            boolean parse_success = false;
+            String errMsg = "Unknown Error.";
+            try {
+                FileWriter fw = new FileWriter(file);
+                preview.write(fw);
+                fw.close();
+
+                lsa.loadFromFile(file);
+                lsa.parse();
+
+                // load source selector and set first source as default
+                DefaultComboBoxModel model = new DefaultComboBoxModel(new Vector(lsa.Nodes.keySet()));
+                srcSelector.setModel(model);
+                lsa.setSource(String.valueOf(srcSelector.getSelectedItem()));
+                selectPreview.setText("Source: " + lsa.source);
+                stepPreview.setText("");
+                parse_success = true;
+            } catch (IOException ex) {
+                openFile.setForeground(ERROR);
+                errMsg = "Read/Write Error: internal error.";
+            } catch (IllegalArgumentException ex) {
+                openFile.setForeground(ERROR);
+                errMsg = ex.getMessage();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
+            if (parse_success)
+                cl.next(cards);
+            else
+                createPopUpWindow(errMsg);
         });
 
         back.addActionListener(e -> {
@@ -103,7 +139,7 @@ public class GUI {
             lsa.setSource(
                     String.valueOf(srcSelector.getSelectedItem())
             );
-            selectPreview.append(lsa.source);
+            selectPreview.setText("Source: " + lsa.source);
             stepPreview.setText("");
         });
         step.addActionListener(e -> {
@@ -147,6 +183,25 @@ public class GUI {
 
     private static void createMenuBar() {
 
+    }
+
+    private static void createPopUpWindow(String msg) {
+        JFrame popup = createWindow("Error",400,200);
+        popup.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        popup.setLayout(new BorderLayout());
+        JPanel btn_g = new JPanel();
+
+        JLabel label = new JLabel(msg, SwingConstants.CENTER);
+        JButton btn_ok = new JButton("OK");
+        btn_ok.addActionListener(e -> {
+            popup.dispose();
+        });
+
+        btn_g.add(btn_ok);
+
+        popup.add(label, BorderLayout.CENTER);
+        popup.add(btn_g, BorderLayout.SOUTH);
+        popup.setVisible(true);
     }
 
     private static void enableButton(JButton button, boolean bool) {

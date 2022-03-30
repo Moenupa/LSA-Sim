@@ -1,5 +1,6 @@
 package Core;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,7 +35,7 @@ public class LSA {
     public HashSet<String> visited = new HashSet<>();
     public HashMap<String, String> Predecessor = new HashMap<>();
 
-    public ArrayList<String> text = new ArrayList<>();
+    public List<String> text = new ArrayList<>();
 
     public static String[] sample = {
         "A: B:5 C:3 D:5 ",
@@ -54,33 +55,64 @@ public class LSA {
         source = null;
     }
 
-    public void Initialize(String path) throws Exception {
-        // completely reset, clearing all buffer and reload
+    // reset all
+    public void safeReset() {
         Reset();
         text.clear();
         Nodes.clear();
+    }
 
-        //Read the file
+    public void loadFromFile(String path) throws Exception {
+        text.clear();
         Scanner sc = new Scanner(Files.newBufferedReader(Paths.get(path)));
-        while(sc.hasNextLine()){
+        while(sc.hasNextLine() ){
             text.add(sc.nextLine());
         }
+        sc.close();
+    }
 
-        for(String s : text){
-            //Split with the first ':', ignoring following colons
+    public void loadFromFile(File file) throws Exception {
+        text.clear();
+        Scanner sc = new Scanner(file);
+        while (sc.hasNextLine()) {
+            text.add(sc.nextLine());
+        }
+        sc.close();
+    }
+
+    public void loadFromStr(String text) {
+        this.text = Arrays.asList(text.split("\n"));
+    }
+
+    /**
+     * Parse `this.text` and store to `this.Nodes`.
+     *
+     * @exception RuntimeException if invalid format detected
+     */
+    public void parse() throws IllegalArgumentException {
+        // clearing cache
+        Nodes.clear();
+
+        for (String s : text){
+            // Split with the first ':', ignoring following colons
             String[] parts = s.split(":", 2);
+
+            // does not contain ':', err
+            if (parts.length < 2)
+                throw new IllegalArgumentException("Invalid Format: Missing ':'.");
+
             String name = parts[0];
             String[] neighbors = parts[1].split(" ");
 
             for (String n : neighbors) {
-                //Check if the same edges from different direction are consistent, throw an exception otherwise
                 if (n.isEmpty()) continue;
-                if(Nodes.containsKey(n)){
-                    String[] nParts = n.split(":");
-                    if(!nParts[0].equals(name))
-                        throw new RuntimeException("Inconsistent edges");
-                }
+                // Check if the same edges from different direction are consistent
                 String[] nParts = n.split(":");
+                if (Nodes.containsKey(n)){
+                    // n is in format like 'A:3'
+                    if (!nParts[0].equals(name))
+                        throw new IllegalArgumentException("Invalid Format: Inconsistent edges.");
+                }
                 String neighbor = nParts[0];
                 int distance = Integer.parseInt(nParts[1]);
                 AddNode(name);
@@ -88,7 +120,12 @@ public class LSA {
                 AddEdge(name, neighbor, distance);
             }
         }
+    }
 
+    public void Initialize(String path) throws Exception {
+        safeReset();
+        loadFromFile(path);
+        parse();
     }
 
     public int setSource(String source){
