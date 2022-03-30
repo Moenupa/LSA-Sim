@@ -33,7 +33,8 @@ public class GUI {
         // openFile btn, cardSwitch btn, preview textarea
         JButton openFile = new JButton("Open File");
         JButton proceed = new JButton("Proceed");
-        JTextArea preview = new JTextArea("\n\n\n\nPreview of the file will be shown here.\n\n\n\n");
+        JTextArea preview = new JTextArea("Preview of the file will be shown here.\n"
+                + "Please select a file by clicking the Open File button below.");
 
         // appearance setting
         // preview.setEditable(false);
@@ -56,10 +57,10 @@ public class GUI {
         openFile.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            fileChooser.addChoosableFileFilter(new FileFilter() {
+            fileChooser.setFileFilter(new FileFilter() {
                 @Override
                 public boolean accept(File f) {
-                    return f.getName().matches("\\.lsr\\s*$") || f.isDirectory();
+                    return f.getName().matches(".*\\.lsr") || f.isDirectory();
                 }
 
                 @Override
