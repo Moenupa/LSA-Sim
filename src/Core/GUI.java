@@ -34,7 +34,9 @@ public class GUI {
         JButton openFile = new JButton("Open File");
         JButton proceed = new JButton("Proceed");
         JTextArea preview = new JTextArea("Preview of the file will be shown here.\n"
-                + "Please select a file by clicking the Open File button below.");
+                + "Please select a file by clicking the Open File button below.\n"
+                + "You can edit this file here after opening the file.\n"
+        );
 
         // appearance setting
         // preview.setEditable(false);
@@ -60,12 +62,12 @@ public class GUI {
             fileChooser.setFileFilter(new FileFilter() {
                 @Override
                 public boolean accept(File f) {
-                    return f.getName().matches(".*\\.lsr") || f.isDirectory();
+                    return f.getName().matches(".*\\.lsa") || f.isDirectory();
                 }
 
                 @Override
                 public String getDescription() {
-                    return "LSR Files, .lsr";
+                    return "LSA Files, .lsa";
                 }
             });
             int option;
