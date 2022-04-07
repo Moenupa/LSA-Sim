@@ -1,6 +1,20 @@
 package Core;
 
+import guru.nidi.graphviz.attribute.Color;
+import guru.nidi.graphviz.attribute.Label;
+import guru.nidi.graphviz.attribute.Shape;
+import guru.nidi.graphviz.attribute.Size;
+import guru.nidi.graphviz.engine.Engine;
+import guru.nidi.graphviz.engine.Format;
+import guru.nidi.graphviz.engine.Graphviz;
+import guru.nidi.graphviz.model.Graph;
+import guru.nidi.graphviz.model.MutableGraph;
+
+import static guru.nidi.graphviz.model.Factory.*;
+
+import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class LSA {
@@ -161,6 +175,7 @@ public class LSA {
                     Q.add(new Dist(s, newDist, d.name));
             }
         }
+        printGraph(draw(d.name));
         return d.name;
     }
 
@@ -213,6 +228,58 @@ public class LSA {
         Nodes.get(to).Neighbors.remove(from);
         return 0;
     }
+
+    public MutableGraph draw(String dest){//highlight the path from source to dest
+        var set = new HashSet<String>();
+        if(dest != null&&Predecessor.get(dest)!=null){
+            do {
+                set.add(dest);
+                dest = Predecessor.get(dest);
+            }while (dest != null);
+        }
+        MutableGraph g = mutGraph("LSA");
+        g.nodeAttrs().add(Shape.CIRCLE);
+        //avoid repetition of edges
+        var edges = new HashMap<String,HashSet<String>>();
+        for (String s : Nodes.keySet()) {
+            edges.put(s, new HashSet<String>());
+        }
+        for(String s : Nodes.keySet()){
+            var n = mutNode(s).add(Color.ORANGE);
+            if(set.contains(s)){
+                n.add(Color.RED);
+            }else if(Distances.get(s) == Integer.MAX_VALUE){
+                n.add(Color.GRAY);
+            }
+            g.add(n);
+            int i = 0;
+            for (String t : Nodes.get(s).Neighbors.keySet()) {
+                if(edges.get(t).contains(s))continue;
+                var e = mutNode(t);
+                var lbl = Label.of(Nodes.get(s).Neighbors.get(t).toString());
+                n.addLink(t);
+                edges.get(s).add(t);
+                n.links().get(i).add(Label.of(Nodes.get(s).Neighbors.get(t).toString()));
+                if(set.contains(t)&&set.contains(s)&&(Objects.equals(Predecessor.get(t), s) || Objects.equals(Predecessor.get(s), t))){
+                    n.links().get(i).add(Color.RED);
+                }
+                i++;
+            }
+        }
+        return g;
+    }
+
+    public int printGraph(MutableGraph g)  {
+        try {
+            Graphviz.fromGraph(g).width(300).engine(Engine.NEATO).render(Format.PNG).toFile(new File("graph.png"));
+        }
+        catch (IOException e) {
+            System.out.println("Error: " + e.getMessage());
+            return -1;
+        }
+        return 0;
+    }
+
 
     @Override
     public String toString() {
