@@ -1,40 +1,49 @@
 package Core;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.File;
 import java.util.*;
 
 public class LSA {
 
-    static class Dist implements Comparable<Dist>{
+    static class Dist implements Comparable<Dist> {
         String name;
         int distance;
+        String prev;
+
+        public Dist(String name, int distance, String prev) {
+            this.name = name;
+            this.distance = distance;
+            this.prev = prev;
+        }
 
         @Override
         public int compareTo(Dist o) {
-            return this.distance - o.distance;
-        }
-
-        public Dist(String name, int distance){
-            this.name = name;
-            this.distance = distance;
+            return Integer.compare(this.distance, o.distance);
         }
     }
 
-    public HashMap<String,Node> Nodes;
+
+    public HashMap<String,Node> Nodes = new HashMap<>();
     public String source;
 
-    public HashMap<String, Integer> Distances ;
-    public PriorityQueue<Dist> Q;
-    public HashSet<String> visited;
-    public HashMap<String, String> Predecessor;
+    public HashMap<String, Integer> Distances = new HashMap<>();
+    public PriorityQueue<Dist> Q = new PriorityQueue<>();
+    public HashSet<String> visited = new HashSet<>();
+    public HashMap<String, String> Predecessor = new HashMap<>();
 
+    public ArrayList<String> text = new ArrayList<>();
 
-    public String[] sample={"A: B:5 C:3 D:5 ","B: A:5 C:4 E:3 F:2","C: A:3 B:4 D:1 E:6","D: A:5 C:1 E:3 ","E: B:3 C:6 D:3 F:5 ","F: B:2 E:5"};
+    public static String[] sample = {
+        "A: B:5 C:3 D:5 ",
+        "B: A:5 C:4 E:3 F:2",
+        "C: A:3 B:4 D:1 E:6",
+        "D: A:5 C:1 E:3 ",
+        "E: B:3 C:6 D:3 F:5 ",
+        "F: B:2 E:5"
+    };
 
-    public void Reset(){
+    // reset source but not nodes
+    public void Reset() {
         Distances.clear();
         Predecessor.clear();
         Q.clear();
@@ -42,39 +51,77 @@ public class LSA {
         source = null;
     }
 
-    public void Initialize(String path) throws IOException {
-        ArrayList<String> text = new ArrayList<>();
-
-        //Read the file
-        Scanner sc = new Scanner(Files.newBufferedReader(Paths.get(path)));
-        while(sc.hasNextLine()){
-            text.add(sc.nextLine());
-        }
-
-        for(String s : text){
-            //Split with the first ':', ignoring following colons
-            String[] parts = s.split(":", 2);
-            String name = parts[0];
-            String[] neighbors = parts[1].split(" ");
-            for(String n : neighbors){
-                //Check if the same edges from different direction are consistent, throw an exception otherwise
-                if(Nodes.containsKey(n)){
-                    String[] nParts = n.split(":");
-                    if(!nParts[0].equals(name))
-                        throw new RuntimeException("Inconsistent edges");
-                }
-                String[] nParts = n.split(":");
-                String neighbor = nParts[0];
-                int distance = Integer.parseInt(nParts[1]);
-                AddNode(name);
-                AddNode(neighbor);
-                AddEdge(name, neighbor, distance);
-            }
-        }
-
+    // reset all
+    public void safeReset() {
+        Reset();
+        text.clear();
+        Nodes.clear();
     }
 
-    public int setSource(String source){
+    public void loadFromFile(File file) throws Exception {
+        safeReset();
+        Scanner sc = new Scanner(file);
+        while (sc.hasNextLine()) {
+            text.add(sc.nextLine());
+        }
+        sc.close();
+    }
+
+    public void loadFromStr(String text) {
+        safeReset();
+        this.text = new ArrayList<>(Arrays.asList(text.split("\n")));
+    }
+
+    /**
+     * Parse `this.text` and store to `this.Nodes`.
+     *
+     * @exception RuntimeException if invalid format detected
+     */
+    public void parse() throws IllegalArgumentException {
+        // clearing cache
+        Nodes.clear();
+
+        for (String s : text){
+            parseLine(s);
+        }
+    }
+
+    public void parseLine(String s) throws IllegalArgumentException {
+        // Split with the first ':', ignoring following colons
+        String[] parts = s.split(":", 2);
+
+        // does not contain ':', err
+        if (parts.length < 2)
+            throw new IllegalArgumentException("Invalid Format: Missing ':', '<node>:<len>'.");
+
+        String name = parts[0];
+        String[] neighbors = parts[1].split(" ");
+
+        for (String n : neighbors) {
+            if (n.isEmpty()) continue;
+            // Check if the same edges from different direction are consistent
+            String[] nParts = n.split(":");
+            if (nParts.length != 2)
+                throw new IllegalArgumentException("Invalid Format: Missing ':', '<node>:<len>'.");
+            if (Nodes.containsKey(n)){
+                // n is in format like 'A:3'
+                if (!nParts[0].equals(name))
+                    throw new IllegalArgumentException("Invalid Format: Inconsistent edges.");
+            }
+            String neighbor = nParts[0];
+            int distance;
+            try {
+                distance = Integer.parseInt(nParts[1]);
+            } catch (Exception ex) {
+                throw new IllegalArgumentException("Invalid Format: Invalid length, '<node>:<len>'.");
+            }
+            AddNode(name);
+            AddNode(neighbor);
+            AddEdge(name, neighbor, distance);
+        }
+    }
+
+    public int setSource(String source) {
         Reset();
         this.source = source;
         for (String s : Nodes.keySet()) {
@@ -83,28 +130,35 @@ public class LSA {
         }
         //Set the distance of the source to 0
         Distances.put(source, 0);
+        visited.add(source);
+
         //Add neighbors of the source to the queue
-        for(String s : Nodes.get(source).Neighbors.keySet()){
-            Q.add(new Dist(s, Nodes.get(source).Neighbors.get(s)));
+        Node src = Nodes.get(source);
+        if (src == null)
+            return 1;
+        for(String s : src.Neighbors.keySet()){
+            Q.add(new Dist(s, Nodes.get(source).Neighbors.get(s), source));
+            Predecessor.put(s, source);
         }
         return 0;
     }
 
-    public String SingleStep(){
+    public String SingleStep() {
         if(source == null)
             throw new RuntimeException("Source not set");
-        //Single step of Dijkstra's algorithm
+        if (Q.isEmpty())
+            return "";
+        // Single step of Dijkstra's algorithm
         Dist d = Q.poll();
         assert d != null;
+        if (visited.contains(d.name)) return  SingleStep();
         visited.add(d.name);
+        Distances.put(d.name, d.distance);
+        Predecessor.put(d.name, d.prev);
         for(String s : Nodes.get(d.name).Neighbors.keySet()){
             if(!visited.contains(s)){
                 int newDist = Distances.get(d.name) + Nodes.get(d.name).Neighbors.get(s);
-                if(!Distances.containsKey(s) || newDist < Distances.get(s)){
-                    Distances.put(s, newDist);
-                    Predecessor.put(s, d.name);
-                    Q.add(new Dist(s, newDist));
-                }
+                    Q.add(new Dist(s, newDist, d.name));
             }
         }
         return d.name;
@@ -160,11 +214,12 @@ public class LSA {
         return 0;
     }
 
-
-
-
-
-
-
-
+    @Override
+    public String toString() {
+        return "LSA{" +
+                "Distances=" + Distances +
+                ", \nvisited=" + visited +
+                ", \nPredecessor=" + Predecessor +
+                '}';
+    }
 }
