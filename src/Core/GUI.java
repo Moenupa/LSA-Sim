@@ -1,12 +1,16 @@
 package Core;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Vector;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
+
+import guru.nidi.graphviz.engine.Format;
+import guru.nidi.graphviz.engine.Graphviz;
 
 public class GUI {
 
@@ -22,6 +26,26 @@ public class GUI {
 
     private static final int FIELD_LEN = 150;
     private static final int KEY_LEN = 100;
+
+    // JPanel that displays a BufferedImage
+    // ref: https://gist.github.com/javagl/4dc0382be7bcb7eaefe7bc65de70e70e
+    private static class ImagePanel extends JPanel {
+        private BufferedImage image;
+
+        void setImage(BufferedImage image) {
+            this.image = image;
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (image != null) {
+                g.drawImage(image, 0, 0, null);
+            }
+        }
+
+    }
 
     private static void createContentPane() {
         // create and set card layouts
@@ -52,6 +76,7 @@ public class GUI {
         JButton btn_computeAll = new JButton("Compute All");
         JButton btn_back = new JButton("Return To File Preview");
         JTextArea stepPreview = new JTextArea();
+        ImagePanel stepImage = new ImagePanel();
         JButton btn_addNode = new JButton("⊕ Node");
         JButton btn_rmNode = new JButton("⊖ Node");
         JButton btn_rmEdge = new JButton("⊖ Edge");
@@ -82,6 +107,7 @@ public class GUI {
         btn_step.setForeground(ACTIVE);
         btn_computeAll.setForeground(ACTIVE);
         tf_addNode.setMaximumSize(new Dimension(FIELD_LEN, 20));
+        stepImage.setBackground(Color.white);
 
         // bind with actions
         openFile.addActionListener(e -> {
@@ -99,7 +125,6 @@ public class GUI {
                 }
             });
             int option;
-            boolean loadFailed = true;
             option = fileChooser.showOpenDialog(mainFrame);
             if (option == JFileChooser.APPROVE_OPTION) {
                 file = fileChooser.getSelectedFile();
@@ -156,9 +181,12 @@ public class GUI {
                 cl.next(cards);
             else
                 createPopUpWindow(errMsg);
+
+            mainFrame.pack();
         });
         btn_back.addActionListener(e -> {
             cl.next(cards);
+            mainFrame.pack();
         });
         btn_addNode.addActionListener(e -> {
             try {
@@ -166,6 +194,7 @@ public class GUI {
                 blink(btn_addNode, PASS, MOD);
                 reloadSteps(stepPreview, cb_source, cb_rmNode, cb_rmEdge_src, cb_rmEdge_dest);
             } catch (Exception ex) {
+                blink(btn_rmEdge, ERROR, MOD);
                 createPopUpWindow(ex.getMessage());
             }
         });
@@ -183,6 +212,7 @@ public class GUI {
                 blink(btn_rmEdge, PASS, MOD);
                 reloadSteps(stepPreview, cb_source, cb_rmNode, cb_rmEdge_src, cb_rmEdge_dest);
             } catch (Exception ex) {
+                blink(btn_rmEdge, ERROR, MOD);
                 createPopUpWindow(ex.getMessage());
             }
         });
@@ -192,13 +222,21 @@ public class GUI {
         });
         btn_step.addActionListener(e -> {
             String ret = lsa.SingleStep();
-            stepPreview.append("SingleStep Ret: " + ret + "\n");
-            if (!ret.isEmpty())
+            if (!ret.isEmpty()) {
+                stepPreview.append("SingleStep Finds Router: " + ret + "\n");
                 stepPreview.append(lsa.toString() + "\n\n");
+                resetImage(stepImage, ret);
+            } else {
+                stepPreview.append("All routers exhausted.\n");
+            }
+            mainFrame.pack();
         });
         btn_computeAll.addActionListener(e -> {
             lsa.Run();
+            lsa.draw(null);
             stepPreview.setText(lsa.toString() + "\n\n");
+            resetImage(stepImage, null);
+            mainFrame.pack();
         });
 
         // exe south group
@@ -214,6 +252,7 @@ public class GUI {
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
         );
         stepScroll.setBorder(BorderFactory.createEmptyBorder());
+        stepScroll.setPreferredSize(new Dimension(400, 400));
 
         JPanel exe_func_g = new JPanel();
         GroupLayout layout = new GroupLayout(exe_func_g);
@@ -241,6 +280,7 @@ public class GUI {
                                 .addComponent(btn_step)
                                 .addComponent(btn_computeAll))
                         .addGap(5, 10, 10)
+                        .addComponent(stepImage)
                         .addComponent(stepScroll)
         );
         layout.setVerticalGroup(
@@ -266,6 +306,7 @@ public class GUI {
                                 .addComponent(btn_computeAll)
                                 .addGap(5,10,10)
                         )
+                        .addComponent(stepImage)
                         .addComponent(stepScroll)
         );
 
@@ -277,6 +318,7 @@ public class GUI {
         cl.show(cards, "open");
 
         mainFrame.getContentPane().add(cards);
+        mainFrame.pack();
         mainFrame.setVisible(true);
     }
 
@@ -294,6 +336,12 @@ public class GUI {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    private static void resetImage(ImagePanel imagePanel, String dest) {
+        BufferedImage image = Graphviz.fromGraph(lsa.draw(dest)).height(500).render(Format.SVG).toImage();
+        imagePanel.setImage(image);
+        imagePanel.setPreferredSize(new Dimension(image.getWidth(), image.getHeight()));
     }
 
     private static String getSelectedStr(JComboBox cb) {
@@ -352,6 +400,9 @@ public class GUI {
     public static void main(String[] args) {
         lsa = new LSA();
         javax.swing.SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception ex) {}
             mainFrame = createWindow("LSA Demo", 800, 600);
             createContentPane();
         });

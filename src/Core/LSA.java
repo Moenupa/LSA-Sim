@@ -3,17 +3,14 @@ package Core;
 import guru.nidi.graphviz.attribute.Color;
 import guru.nidi.graphviz.attribute.Label;
 import guru.nidi.graphviz.attribute.Shape;
-import guru.nidi.graphviz.attribute.Size;
 import guru.nidi.graphviz.engine.Engine;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.engine.GraphvizV8Engine;
-import guru.nidi.graphviz.model.Graph;
 import guru.nidi.graphviz.model.MutableGraph;
 
 import static guru.nidi.graphviz.model.Factory.*;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -41,10 +38,34 @@ public class LSA {
     public HashMap<String,Node> Nodes = new HashMap<>();
     public String source;
 
-    public HashMap<String, Integer> Distances = new HashMap<>();
+    public HashMap<String, Integer> Distances = new HashMap<>() {
+        @Override
+        public String toString() {
+            return super.toString()
+                    .replaceAll("\\s*[^\\s]*=2147483647,?", "")
+                    .replaceAll("^\\{", "")
+                    .replaceAll(",?}$", "");
+        }
+    };
     public PriorityQueue<Dist> Q = new PriorityQueue<>();
-    public HashSet<String> visited = new HashSet<>();
-    public HashMap<String, String> Predecessor = new HashMap<>();
+    public HashSet<String> visited = new HashSet<>() {
+        @Override
+        public String toString() {
+            return super.toString()
+                    .replaceAll("^\\[", "")
+                    .replaceAll("]$", "");
+        }
+    };
+    public HashMap<String, String> Predecessor = new HashMap<>() {
+        @Override
+        public String toString() {
+            return super.toString()
+                    .replaceAll("\\s*[^\\s]*=null,?", "")
+                    .replaceAll("^\\{", "")
+                    .replaceAll(",?}$", "")
+                    .replaceAll("=", "←");
+        }
+    };
 
     public ArrayList<String> text = new ArrayList<>();
 
@@ -102,6 +123,9 @@ public class LSA {
     }
 
     public void parseLine(String s) throws IllegalArgumentException {
+        if (!s.matches("([^:]*:)?(\\ [^:]*:[\\d]*)*\\s*"))
+            throw new IllegalArgumentException("Invalid Format: Should be in format 'X: Y:1 Z:2'.");
+
         // Split with the first ':', ignoring following colons
         String[] parts = s.split(":", 2);
 
@@ -109,18 +133,20 @@ public class LSA {
         if (parts.length < 2)
             throw new IllegalArgumentException("Invalid Format: Missing ':', '<node>:<len>'.");
 
-        String name = parts[0];
+        String src = parts[0];
         String[] neighbors = parts[1].split(" ");
 
         for (String n : neighbors) {
             if (n.isEmpty()) continue;
             // Check if the same edges from different direction are consistent
+            // nParts[0] is neighbor name; nParts[1] is distance
             String[] nParts = n.split(":");
             if (nParts.length != 2)
                 throw new IllegalArgumentException("Invalid Format: Missing ':', '<node>:<len>'.");
-            if (Nodes.containsKey(n)){
-                // n is in format like 'A:3'
-                if (!nParts[0].equals(name))
+            if (Nodes.containsKey(n)) {
+                String EdgeFromN = String.valueOf(Nodes.get(n).getEdge(src));
+                // edge n-src is not empty && not the consistent with src-n
+                if (!EdgeFromN.isEmpty() && !nParts[1].equals(EdgeFromN))
                     throw new IllegalArgumentException("Invalid Format: Inconsistent edges.");
             }
             String neighbor = nParts[0];
@@ -130,9 +156,9 @@ public class LSA {
             } catch (Exception ex) {
                 throw new IllegalArgumentException("Invalid Format: Invalid length, '<node>:<len>'.");
             }
-            AddNode(name);
+            AddNode(src);
             AddNode(neighbor);
-            AddEdge(name, neighbor, distance);
+            AddEdge(src, neighbor, distance);
         }
     }
 
@@ -166,7 +192,7 @@ public class LSA {
         // Single step of Dijkstra's algorithm
         Dist d = Q.poll();
         assert d != null;
-        if (visited.contains(d.name)) return  SingleStep();
+        if (visited.contains(d.name)) return SingleStep();
         visited.add(d.name);
         Distances.put(d.name, d.distance);
         Predecessor.put(d.name, d.prev);
@@ -176,7 +202,7 @@ public class LSA {
                     Q.add(new Dist(s, newDist, d.name));
             }
         }
-        printGraph(draw(d.name));
+        // printGraph(draw(d.name));
         return d.name;
     }
 
@@ -285,10 +311,8 @@ public class LSA {
 
     @Override
     public String toString() {
-        return "LSA{" +
-                "Distances=" + Distances +
-                ", \nvisited=" + visited +
-                ", \nPredecessor=" + Predecessor +
-                '}';
+        return "Known Distances: " + Distances +
+                "\nVisited Routers: " + visited +
+                "\nEstablished Link: " + Predecessor;
     }
 }
