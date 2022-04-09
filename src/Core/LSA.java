@@ -7,6 +7,7 @@ import guru.nidi.graphviz.attribute.Size;
 import guru.nidi.graphviz.engine.Engine;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
+import guru.nidi.graphviz.engine.GraphvizV8Engine;
 import guru.nidi.graphviz.model.Graph;
 import guru.nidi.graphviz.model.MutableGraph;
 
@@ -230,6 +231,7 @@ public class LSA {
     }
 
     public MutableGraph draw(String dest){//highlight the path from source to dest
+        Graphviz.useEngine(new GraphvizV8Engine());
         var set = new HashSet<String>();
         if(dest != null&&Predecessor.get(dest)!=null){
             do {
