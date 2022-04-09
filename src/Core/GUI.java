@@ -275,10 +275,10 @@ public class GUI {
                                 .addComponent(btn_step)
                                 .addComponent(btn_computeAll))
                         .addGap(5, 10, 10)
-                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                                .addComponent(stepImage)
-                                .addComponent(stepScroll)
-                        )
+                        .addComponent(stepImage)
+                        .addComponent(stepScroll)
+                        // .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                        // )
         );
         layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.CENTER)
@@ -303,10 +303,10 @@ public class GUI {
                                 .addComponent(btn_computeAll)
                                 .addGap(5,10,10)
                         )
-                        .addGroup(layout.createSequentialGroup()
-                                .addComponent(stepImage)
-                                .addComponent(stepScroll)
-                        )
+                        .addComponent(stepImage)
+                        .addComponent(stepScroll)
+                        // .addGroup(layout.createSequentialGroup()
+                        // )
         );
 
         open.add(file_s_g, BorderLayout.SOUTH);
