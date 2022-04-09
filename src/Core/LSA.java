@@ -101,6 +101,9 @@ public class LSA {
     }
 
     public void parseLine(String s) throws IllegalArgumentException {
+        if (!s.matches("([^:]*:)?(\\ [^:]*:[\\d]*)*\\s*"))
+            throw new IllegalArgumentException("Invalid Format: Should be in format 'X: Y:1 Z:2'.");
+
         // Split with the first ':', ignoring following colons
         String[] parts = s.split(":", 2);
 
@@ -108,18 +111,20 @@ public class LSA {
         if (parts.length < 2)
             throw new IllegalArgumentException("Invalid Format: Missing ':', '<node>:<len>'.");
 
-        String name = parts[0];
+        String src = parts[0];
         String[] neighbors = parts[1].split(" ");
 
         for (String n : neighbors) {
             if (n.isEmpty()) continue;
             // Check if the same edges from different direction are consistent
+            // nParts[0] is neighbor name; nParts[1] is distance
             String[] nParts = n.split(":");
             if (nParts.length != 2)
                 throw new IllegalArgumentException("Invalid Format: Missing ':', '<node>:<len>'.");
-            if (Nodes.containsKey(n)){
-                // n is in format like 'A:3'
-                if (!nParts[0].equals(name))
+            if (Nodes.containsKey(n)) {
+                String EdgeFromN = String.valueOf(Nodes.get(n).getEdge(src));
+                // edge n-src is not empty && not the consistent with src-n
+                if (!EdgeFromN.isEmpty() && !nParts[1].equals(EdgeFromN))
                     throw new IllegalArgumentException("Invalid Format: Inconsistent edges.");
             }
             String neighbor = nParts[0];
@@ -129,9 +134,9 @@ public class LSA {
             } catch (Exception ex) {
                 throw new IllegalArgumentException("Invalid Format: Invalid length, '<node>:<len>'.");
             }
-            AddNode(name);
+            AddNode(src);
             AddNode(neighbor);
-            AddEdge(name, neighbor, distance);
+            AddEdge(src, neighbor, distance);
         }
     }
 
