@@ -3,10 +3,7 @@ package Core;
 import guru.nidi.graphviz.attribute.Color;
 import guru.nidi.graphviz.attribute.Label;
 import guru.nidi.graphviz.attribute.Shape;
-import guru.nidi.graphviz.engine.Engine;
-import guru.nidi.graphviz.engine.Format;
-import guru.nidi.graphviz.engine.Graphviz;
-import guru.nidi.graphviz.engine.GraphvizV8Engine;
+import guru.nidi.graphviz.engine.*;
 import guru.nidi.graphviz.model.MutableGraph;
 
 import static guru.nidi.graphviz.model.Factory.*;
@@ -257,7 +254,7 @@ public class LSA {
     }
 
     public MutableGraph draw(String dest){//highlight the path from source to dest
-        Graphviz.useEngine(new GraphvizV8Engine());
+        Graphviz.useEngine(new GraphvizJdkEngine());
         var set = new HashSet<String>();
         if(dest != null&&Predecessor.get(dest)!=null){
             do {
