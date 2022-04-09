@@ -29,22 +29,18 @@ public class GUI {
 
     // JPanel that displays a BufferedImage
     // ref: https://gist.github.com/javagl/4dc0382be7bcb7eaefe7bc65de70e70e
-    private static class ImagePanel extends JPanel
-    {
+    private static class ImagePanel extends JPanel {
         private BufferedImage image;
 
-        void setImage(BufferedImage image)
-        {
+        void setImage(BufferedImage image) {
             this.image = image;
             repaint();
         }
 
         @Override
-        protected void paintComponent(Graphics g)
-        {
+        protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            if (image != null)
-            {
+            if (image != null) {
                 g.drawImage(image, 0, 0, null);
             }
         }
@@ -198,6 +194,7 @@ public class GUI {
                 blink(btn_addNode, PASS, MOD);
                 reloadSteps(stepPreview, cb_source, cb_rmNode, cb_rmEdge_src, cb_rmEdge_dest);
             } catch (Exception ex) {
+                blink(btn_rmEdge, ERROR, MOD);
                 createPopUpWindow(ex.getMessage());
             }
         });
@@ -215,6 +212,7 @@ public class GUI {
                 blink(btn_rmEdge, PASS, MOD);
                 reloadSteps(stepPreview, cb_source, cb_rmNode, cb_rmEdge_src, cb_rmEdge_dest);
             } catch (Exception ex) {
+                blink(btn_rmEdge, ERROR, MOD);
                 createPopUpWindow(ex.getMessage());
             }
         });
@@ -224,10 +222,12 @@ public class GUI {
         });
         btn_step.addActionListener(e -> {
             String ret = lsa.SingleStep();
-            stepPreview.append("SingleStep Finds Router: " + ret + "\n");
             if (!ret.isEmpty()) {
+                stepPreview.append("SingleStep Finds Router: " + ret + "\n");
                 stepPreview.append(lsa.toString() + "\n\n");
                 resetImage(stepImage, ret);
+            } else {
+                stepPreview.append("All routers exhausted.\n");
             }
             mainFrame.pack();
         });
