@@ -1,12 +1,17 @@
 package Core;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Vector;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
+
+import guru.nidi.graphviz.engine.Engine;
+import guru.nidi.graphviz.engine.Format;
+import guru.nidi.graphviz.engine.Graphviz;
 
 public class GUI {
 
@@ -22,6 +27,30 @@ public class GUI {
 
     private static final int FIELD_LEN = 150;
     private static final int KEY_LEN = 100;
+
+    // JPanel that displays a BufferedImage
+    // ref: https://gist.github.com/javagl/4dc0382be7bcb7eaefe7bc65de70e70e
+    private static class ImagePanel extends JPanel
+    {
+        private BufferedImage image;
+
+        void setImage(BufferedImage image)
+        {
+            this.image = image;
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g)
+        {
+            super.paintComponent(g);
+            if (image != null)
+            {
+                g.drawImage(image, 0, 0, null);
+            }
+        }
+
+    }
 
     private static void createContentPane() {
         // create and set card layouts
@@ -52,6 +81,7 @@ public class GUI {
         JButton btn_computeAll = new JButton("Compute All");
         JButton btn_back = new JButton("Return To File Preview");
         JTextArea stepPreview = new JTextArea();
+        ImagePanel stepImage = new ImagePanel();
         JButton btn_addNode = new JButton("⊕ Node");
         JButton btn_rmNode = new JButton("⊖ Node");
         JButton btn_rmEdge = new JButton("⊖ Edge");
@@ -193,12 +223,16 @@ public class GUI {
         btn_step.addActionListener(e -> {
             String ret = lsa.SingleStep();
             stepPreview.append("SingleStep Ret: " + ret + "\n");
-            if (!ret.isEmpty())
+            if (!ret.isEmpty()) {
                 stepPreview.append(lsa.toString() + "\n\n");
+                resetImage(stepImage, ret);
+            }
         });
         btn_computeAll.addActionListener(e -> {
             lsa.Run();
+            lsa.draw(null);
             stepPreview.setText(lsa.toString() + "\n\n");
+            resetImage(stepImage, null);
         });
 
         // exe south group
@@ -241,7 +275,10 @@ public class GUI {
                                 .addComponent(btn_step)
                                 .addComponent(btn_computeAll))
                         .addGap(5, 10, 10)
-                        .addComponent(stepScroll)
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                                .addComponent(stepImage)
+                                .addComponent(stepScroll)
+                        )
         );
         layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.CENTER)
@@ -266,7 +303,10 @@ public class GUI {
                                 .addComponent(btn_computeAll)
                                 .addGap(5,10,10)
                         )
-                        .addComponent(stepScroll)
+                        .addGroup(layout.createSequentialGroup()
+                                .addComponent(stepImage)
+                                .addComponent(stepScroll)
+                        )
         );
 
         open.add(file_s_g, BorderLayout.SOUTH);
@@ -294,6 +334,11 @@ public class GUI {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    private static void resetImage(ImagePanel imagePanel, String dest) {
+        BufferedImage image = Graphviz.fromGraph(lsa.draw(dest)).width(300).render(Format.SVG).toImage();
+        imagePanel.setImage(image);
     }
 
     private static String getSelectedStr(JComboBox cb) {

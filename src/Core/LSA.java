@@ -165,7 +165,7 @@ public class LSA {
         // Single step of Dijkstra's algorithm
         Dist d = Q.poll();
         assert d != null;
-        if (visited.contains(d.name)) return  SingleStep();
+        if (visited.contains(d.name)) return SingleStep();
         visited.add(d.name);
         Distances.put(d.name, d.distance);
         Predecessor.put(d.name, d.prev);
@@ -175,7 +175,7 @@ public class LSA {
                     Q.add(new Dist(s, newDist, d.name));
             }
         }
-        printGraph(draw(d.name));
+        // printGraph(draw(d.name));
         return d.name;
     }
 
