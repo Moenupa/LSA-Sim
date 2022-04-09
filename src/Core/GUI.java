@@ -9,7 +9,6 @@ import java.util.Vector;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 
-import guru.nidi.graphviz.engine.Engine;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 
@@ -225,7 +224,7 @@ public class GUI {
         });
         btn_step.addActionListener(e -> {
             String ret = lsa.SingleStep();
-            stepPreview.append("SingleStep Ret: " + ret + "\n");
+            stepPreview.append("SingleStep Finds Router: " + ret + "\n");
             if (!ret.isEmpty()) {
                 stepPreview.append(lsa.toString() + "\n\n");
                 resetImage(stepImage, ret);

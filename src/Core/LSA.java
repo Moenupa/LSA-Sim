@@ -3,16 +3,13 @@ package Core;
 import guru.nidi.graphviz.attribute.Color;
 import guru.nidi.graphviz.attribute.Label;
 import guru.nidi.graphviz.attribute.Shape;
-import guru.nidi.graphviz.attribute.Size;
 import guru.nidi.graphviz.engine.Engine;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
-import guru.nidi.graphviz.model.Graph;
 import guru.nidi.graphviz.model.MutableGraph;
 
 import static guru.nidi.graphviz.model.Factory.*;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -40,10 +37,34 @@ public class LSA {
     public HashMap<String,Node> Nodes = new HashMap<>();
     public String source;
 
-    public HashMap<String, Integer> Distances = new HashMap<>();
+    public HashMap<String, Integer> Distances = new HashMap<>() {
+        @Override
+        public String toString() {
+            return super.toString()
+                    .replaceAll("\\s*[^\\s]*=2147483647,?", "")
+                    .replaceAll("^\\{", "")
+                    .replaceAll(",?}$", "");
+        }
+    };
     public PriorityQueue<Dist> Q = new PriorityQueue<>();
-    public HashSet<String> visited = new HashSet<>();
-    public HashMap<String, String> Predecessor = new HashMap<>();
+    public HashSet<String> visited = new HashSet<>() {
+        @Override
+        public String toString() {
+            return super.toString()
+                    .replaceAll("^\\[", "")
+                    .replaceAll("]$", "");
+        }
+    };
+    public HashMap<String, String> Predecessor = new HashMap<>() {
+        @Override
+        public String toString() {
+            return super.toString()
+                    .replaceAll("\\s*[^\\s]*=null,?", "")
+                    .replaceAll("^\\{", "")
+                    .replaceAll(",?}$", "")
+                    .replaceAll("=", "←");
+        }
+    };
 
     public ArrayList<String> text = new ArrayList<>();
 
@@ -288,10 +309,8 @@ public class LSA {
 
     @Override
     public String toString() {
-        return "LSA{" +
-                "Distances=" + Distances +
-                ", \nvisited=" + visited +
-                ", \nPredecessor=" + Predecessor +
-                '}';
+        return "Known Distances: " + Distances +
+                "\nVisited Routers: " + visited +
+                "\nEstablished Link: " + Predecessor;
     }
 }
