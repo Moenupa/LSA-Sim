@@ -25,8 +25,12 @@ public class GUI {
     private static final Color WARN = new Color(255, 149, 0);
     private static final Color ERROR = new Color(255, 59, 48);
 
-    private static final int FIELD_LEN = 150;
-    private static final int KEY_LEN = 100;
+    private static final int FIELD_WIDTH = 150;
+    private static final int KEY_WIDTH = 100;
+
+    private static final int GRAPH_WIDTH = 400;
+    private static final int GRAPH_HEIGHT = 100;
+    private static BufferedImage blank;
 
     // JPanel that displays a BufferedImage
     // ref: https://gist.github.com/javagl/4dc0382be7bcb7eaefe7bc65de70e70e
@@ -48,70 +52,85 @@ public class GUI {
 
     }
 
-    private static void createContentPane() {
-        // create and set card layouts
-        // can shuffle between card1 and card2
-        JPanel open = new JPanel(new BorderLayout());
-        JPanel exe = new JPanel(new BorderLayout());
-        JPanel cards = new JPanel(new CardLayout());
-        cards.add("open", open);
-        cards.add("exe", exe);
-        CardLayout cl = (CardLayout) (cards.getLayout());
+    private static final JPanel pg_open = new JPanel(new BorderLayout());
+    private static final JPanel pg_exe = new JPanel(new BorderLayout());
+    private static final JPanel cards = new JPanel(new CardLayout());
+    private static final CardLayout cl = (CardLayout) (cards.getLayout());
 
-        // 3 elements for open card:
-        // openFile btn, cardSwitch btn, preview textarea
-        JButton openFile = new JButton("Open File");
-        JButton proceed = new JButton("Proceed");
-        JTextArea preview = new JTextArea("Preview of the file will be shown here.\n"
-                + "You can edit here directly even after opening a file.\n"
-        );
+    private static final JButton btn_open = new JButton("Open File");
+    private static final JTextArea ta_file = new JTextArea(
+            """
+            Preview of the file will be shown here.
+            You can edit here directly even after opening a file.
+            """
+    );
+    private static final JButton btn_next = new JButton("Proceed");
+    private static final JButton btn_back = new JButton("Return To File Preview");
 
-        JComboBox<String> cb_source = new JComboBox<>();
-        JComboBox<String> cb_rmEdge_src = new JComboBox<>();
-        JComboBox<String> cb_rmEdge_dest = new JComboBox<>();
-        JComboBox<String> cb_rmNode = new JComboBox<>();
-        JLabel lb_select = new JLabel("Select Source: ");
-        JTextField tf_addNode = new JTextField("X: A:0");
-        JLabel lb_rmEdge = new JLabel("TO");
-        JButton btn_step = new JButton("Single Step");
-        JButton btn_computeAll = new JButton("Compute All");
-        JButton btn_back = new JButton("Return To File Preview");
-        JTextArea stepPreview = new JTextArea();
-        ImagePanel stepImage = new ImagePanel();
-        JButton btn_addNode = new JButton("⊕ Node");
-        JButton btn_rmNode = new JButton("⊖ Node");
-        JButton btn_rmEdge = new JButton("⊖ Edge");
+    // dynamic network topology
+    private static final JButton btn_addNode = new JButton("⊕ Node");
+    private static final JTextField tf_addNode = new JTextField("X: A:1");
 
+    private static final JButton btn_rmEdge = new JButton("⊖ Edge");
+    private static final JComboBox<String> cb_rmEdge_src = new JComboBox<>();
+    private static final JLabel lb_rmEdge = new JLabel("TO");
+    private static final JComboBox<String> cb_rmEdge_dest = new JComboBox<>();
+
+    private static final JButton btn_rmNode = new JButton("⊖ Node");
+    private static final JComboBox<String> cb_rmNode = new JComboBox<>();
+
+    // LSR computation
+    private static final JLabel lb_select = new JLabel("Select Source: ");
+    private static final JComboBox<String> cb_sel_src = new JComboBox<>();
+    private static final JButton btn_step = new JButton("Single Step");
+    private static final JButton btn_computeAll = new JButton("Compute All");
+
+    private static final JTextArea ta_step = new JTextArea();
+    private static final JScrollPane scr_step = new JScrollPane(
+            ta_step,
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+            JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+    );
+    private static final ImagePanel img_pn = new ImagePanel();
+
+    private static void stylingComponents() {
         // appearance setting
         // don't merge the two setBorder unless ejecting lambda functions
-        preview.setBorder(BorderFactory.createCompoundBorder(
-                preview.getBorder(),
+        ta_file.setBorder(BorderFactory.createCompoundBorder(
+                ta_file.getBorder(),
                 BorderFactory.createEmptyBorder(10, 10, 10, 10)));
-        stepPreview.setBorder(BorderFactory.createCompoundBorder(
-                stepPreview.getBorder(),
+        ta_step.setBorder(BorderFactory.createCompoundBorder(
+                ta_step.getBorder(),
                 BorderFactory.createEmptyBorder(10, 10, 10, 10)));
-        proceed.setForeground(WARN);
-        openFile.setForeground(ACTIVE);
-        cb_source.setMaximumSize(new Dimension(FIELD_LEN, 20));
-        cb_rmNode.setMaximumSize(new Dimension(FIELD_LEN, 20));
-        cb_rmEdge_src.setMaximumSize(new Dimension(FIELD_LEN / 3, 20));
-        cb_rmEdge_dest.setMaximumSize(new Dimension(FIELD_LEN / 3, 20));
-        btn_addNode.setMinimumSize(new Dimension(KEY_LEN, 0));
-        btn_rmNode.setMinimumSize(new Dimension(KEY_LEN, 0));
-        btn_rmEdge.setMinimumSize(new Dimension(KEY_LEN, 0));
-        btn_step.setMinimumSize(new Dimension(KEY_LEN + FIELD_LEN, 0));
-        btn_computeAll.setMinimumSize(new Dimension(KEY_LEN + FIELD_LEN, 0));
+
+        btn_next.setForeground(WARN);
+        btn_open.setForeground(ACTIVE);
+        btn_addNode.setMinimumSize(new Dimension(KEY_WIDTH, 0));
+        btn_rmNode.setMinimumSize(new Dimension(KEY_WIDTH, 0));
+        btn_rmEdge.setMinimumSize(new Dimension(KEY_WIDTH, 0));
+        btn_step.setMinimumSize(new Dimension(KEY_WIDTH + FIELD_WIDTH, 0));
+        btn_computeAll.setMinimumSize(new Dimension(KEY_WIDTH + FIELD_WIDTH, 0));
         btn_back.setForeground(WARN);
         btn_addNode.setForeground(MOD);
         btn_rmNode.setForeground(MOD);
         btn_rmEdge.setForeground(MOD);
         btn_step.setForeground(ACTIVE);
         btn_computeAll.setForeground(ACTIVE);
-        tf_addNode.setMaximumSize(new Dimension(FIELD_LEN, 20));
-        stepImage.setBackground(Color.white);
 
-        // bind with actions
-        openFile.addActionListener(e -> {
+        cb_sel_src.setMaximumSize(new Dimension(FIELD_WIDTH, 20));
+        cb_rmNode.setMaximumSize(new Dimension(FIELD_WIDTH, 20));
+        cb_rmEdge_src.setMaximumSize(new Dimension(FIELD_WIDTH / 3, 20));
+        cb_rmEdge_dest.setMaximumSize(new Dimension(FIELD_WIDTH / 3, 20));
+
+        tf_addNode.setMaximumSize(new Dimension(FIELD_WIDTH, 20));
+        img_pn.setBackground(Color.white);
+
+        scr_step.setBorder(BorderFactory.createEmptyBorder());
+        scr_step.setPreferredSize(new Dimension(GRAPH_WIDTH, GRAPH_HEIGHT));
+    }
+
+    private static void bindButtonActions() {
+        btn_open.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
             fileChooser.setFileFilter(new FileFilter() {
@@ -119,81 +138,77 @@ public class GUI {
                 public boolean accept(File f) {
                     return f.getName().matches(".*\\.lsa") || f.isDirectory();
                 }
-
                 @Override
                 public String getDescription() {
                     return "LSA Files, .lsa";
                 }
             });
-            int option;
-            option = fileChooser.showOpenDialog(mainFrame);
+            int option = fileChooser.showOpenDialog(mainFrame);
             if (option == JFileChooser.APPROVE_OPTION) {
                 file = fileChooser.getSelectedFile();
-                openFile.setText(file.getName());
+                btn_open.setText(file.getName());
 
                 try {
                     // read file and show preview
                     lsa.loadFromFile(file);
-                    preview.setText("");
+                    ta_file.setText("");
                     for (String line : lsa.text)
-                        preview.append(line + "\n");
+                        ta_file.append(line + "\n");
 
                     // parse file
                     lsa.parse();
-                    blink(openFile, PASS, ACTIVE);
+                    blink(btn_open, PASS, ACTIVE);
                 } catch (IOException ex) {
-                    blink(openFile, ERROR, ACTIVE);
+                    blink(btn_open, ERROR, ACTIVE);
                     createPopUpWindow("Read/Write Error.");
                 } catch (IllegalArgumentException ex) {
-                    blink(openFile, ERROR, ACTIVE);
+                    blink(btn_open, ERROR, ACTIVE);
                     createPopUpWindow(ex.getMessage());
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             }
         });
-        proceed.addActionListener(e -> {
+        btn_next.addActionListener(e -> {
             boolean parse_success = false;
             String errMsg = "Unknown Error.";
             try {
                 if (file != null) {
                     FileWriter fw = new FileWriter(file);
-                    preview.write(fw);
+                    ta_file.write(fw);
                     fw.close();
                 }
 
-                lsa.loadFromStr(preview.getText());
+                lsa.loadFromStr(ta_file.getText());
                 lsa.parse();
 
                 // load source selector and set first source as default
-                reloadSteps(stepPreview, cb_source, cb_rmNode, cb_rmEdge_src, cb_rmEdge_dest);
+                reloadSteps();
                 parse_success = true;
+                cl.next(cards);
             } catch (IOException ex) {
-                openFile.setForeground(ERROR);
                 errMsg = "Read/Write Error: internal error.";
             } catch (IllegalArgumentException ex) {
-                openFile.setForeground(ERROR);
                 errMsg = ex.getMessage();
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
 
-            if (parse_success)
-                cl.next(cards);
-            else
+            if (!parse_success)
                 createPopUpWindow(errMsg);
 
             mainFrame.pack();
         });
         btn_back.addActionListener(e -> {
             cl.next(cards);
+            setBlankImage();
             mainFrame.pack();
         });
         btn_addNode.addActionListener(e -> {
             try {
                 lsa.parseLine(tf_addNode.getText());
                 blink(btn_addNode, PASS, MOD);
-                reloadSteps(stepPreview, cb_source, cb_rmNode, cb_rmEdge_src, cb_rmEdge_dest);
+                reloadSteps();
             } catch (Exception ex) {
                 blink(btn_rmEdge, ERROR, MOD);
                 createPopUpWindow(ex.getMessage());
@@ -202,7 +217,7 @@ public class GUI {
         btn_rmNode.addActionListener(e -> {
             lsa.RemoveNode(getSelectedStr(cb_rmNode));
             blink(btn_rmNode, PASS, MOD);
-            reloadSteps(stepPreview, cb_source, cb_rmNode, cb_rmEdge_src, cb_rmEdge_dest);
+            reloadSteps();
         });
         btn_rmEdge.addActionListener(e -> {
             try {
@@ -211,54 +226,49 @@ public class GUI {
                         getSelectedStr(cb_rmEdge_dest)
                 );
                 blink(btn_rmEdge, PASS, MOD);
-                reloadSteps(stepPreview, cb_source, cb_rmNode, cb_rmEdge_src, cb_rmEdge_dest);
+                reloadSteps();
             } catch (Exception ex) {
                 blink(btn_rmEdge, ERROR, MOD);
                 createPopUpWindow(ex.getMessage());
             }
         });
-        cb_source.addActionListener(e -> {
-            lsa.setSource(getSelectedStr(cb_source));
-            stepPreview.setText("");
+        cb_sel_src.addActionListener(e -> {
+            lsa.setSource(getSelectedStr(cb_sel_src));
+            ta_step.setText("");
         });
         btn_step.addActionListener(e -> {
             String ret = lsa.SingleStep();
             if (!ret.isEmpty()) {
-                stepPreview.append("SingleStep Finds Router: " + ret + "\n");
-                stepPreview.append(lsa.toString() + "\n\n");
-                resetImage(stepImage, ret);
+                ta_step.append("SingleStep Finds Router: " + ret + "\n");
+                ta_step.append(lsa.toString() + "\n\n");
+                resetImage(ret);
             } else {
-                stepPreview.append("All routers exhausted.\n");
+                ta_step.append("All routers exhausted.\n");
             }
             mainFrame.pack();
         });
         btn_computeAll.addActionListener(e -> {
             lsa.Run();
             lsa.draw(null);
-            stepPreview.setText(lsa.toString() + "\n\n");
-            resetImage(stepImage, null);
+            ta_step.setText(lsa.toString() + "\n\n");
+            resetImage(null);
             mainFrame.pack();
         });
+    }
 
-        // exe south group
-        JPanel exe_s_g = new JPanel();
-        exe_s_g.add(btn_back);
+    private static void initMainFrame() {
+        // create and set card layouts
+        // can shuffle between card1 and card2
+        cards.add("open", pg_open);
+        cards.add("exe", pg_exe);
 
-        JPanel file_s_g = new JPanel();
-        file_s_g.add(openFile); file_s_g.add(proceed);
-
-        JScrollPane stepScroll = new JScrollPane(
-                stepPreview,
-                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
-        );
-        stepScroll.setBorder(BorderFactory.createEmptyBorder());
-        stepScroll.setPreferredSize(new Dimension(400, 400));
+        stylingComponents();
+        setBlankImage();
+        bindButtonActions();
 
         JPanel exe_func_g = new JPanel();
         GroupLayout layout = new GroupLayout(exe_func_g);
         exe_func_g.setLayout(layout);
-
         layout.setHorizontalGroup(
                 layout.createSequentialGroup()
                         .addGap(5, 10, 10)
@@ -277,12 +287,14 @@ public class GUI {
                                                         .addComponent(lb_rmEdge)
                                                         .addComponent(cb_rmEdge_dest)
                                                 )
-                                                .addComponent(cb_source)))
+                                                .addComponent(cb_sel_src)))
                                 .addComponent(btn_step)
                                 .addComponent(btn_computeAll))
                         .addGap(5, 10, 10)
-                        .addComponent(stepImage)
-                        .addComponent(stepScroll)
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                            .addComponent(img_pn)
+                            .addComponent(scr_step)
+                        )
         );
         layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.CENTER)
@@ -302,19 +314,24 @@ public class GUI {
                                 .addGap(10, 20, 20)
                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                         .addComponent(lb_select)
-                                        .addComponent(cb_source))
+                                        .addComponent(cb_sel_src))
                                 .addComponent(btn_step)
                                 .addComponent(btn_computeAll)
                                 .addGap(5,10,10)
                         )
-                        .addComponent(stepImage)
-                        .addComponent(stepScroll)
+                        .addGroup(layout.createSequentialGroup()
+                                .addComponent(img_pn)
+                                .addComponent(scr_step)
+                        )
         );
 
-        open.add(file_s_g, BorderLayout.SOUTH);
-        open.add(preview, BorderLayout.CENTER);
-        exe.add(exe_s_g, BorderLayout.SOUTH);
-        exe.add(exe_func_g, BorderLayout.CENTER);
+        JPanel exe_s_g = new JPanel(); exe_s_g.add(btn_back);
+        JPanel file_s_g = new JPanel(); file_s_g.add(btn_open); file_s_g.add(btn_next);
+
+        pg_open.add(file_s_g, BorderLayout.SOUTH);
+        pg_open.add(ta_file, BorderLayout.CENTER);
+        pg_exe.add(exe_s_g, BorderLayout.SOUTH);
+        pg_exe.add(exe_func_g, BorderLayout.CENTER);
 
         cl.show(cards, "open");
 
@@ -325,7 +342,7 @@ public class GUI {
 
     private static void blink(JComponent c, Color blink, Color constant) {
         c.setForeground(blink);
-        setTimeout(() -> {c.setForeground(constant);}, 1000);
+        setTimeout(() -> {c.setForeground(constant);}, 2000);
     }
 
     public static void setTimeout(Runnable runnable, int delay){
@@ -339,10 +356,24 @@ public class GUI {
         }).start();
     }
 
-    private static void resetImage(ImagePanel imagePanel, String dest) {
-        BufferedImage image = Graphviz.fromGraph(lsa.draw(dest)).height(500).engine(Engine.NEATO).render(Format.SVG).toImage();
-        imagePanel.setImage(image);
-        imagePanel.setPreferredSize(new Dimension(image.getWidth(), image.getHeight()));
+    private static void resetImage(String dest) {
+        BufferedImage image = Graphviz.fromGraph(lsa.draw(dest))
+                .width(GRAPH_WIDTH)
+                .engine(Engine.NEATO)
+                .render(Format.SVG)
+                .toImage();
+        img_pn.setImage(image);
+        img_pn.setPreferredSize(new Dimension(image.getWidth(), image.getHeight()));
+    }
+
+    private static void setBlankImage() {
+        if (blank == null) {
+            blank = new BufferedImage(GRAPH_WIDTH, GRAPH_HEIGHT, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2d = blank.createGraphics();
+            g2d.setColor(Color.white);
+            g2d.fillRect(0, 0, blank.getWidth(), blank.getHeight());
+        }
+        img_pn.setImage(blank);
     }
 
     private static String getSelectedStr(JComboBox cb) {
@@ -351,17 +382,15 @@ public class GUI {
 
     /**
      * Erase all information about calculated steps and reload
-     *
-     * @param pre preview of the steps
      */
-    private static void reloadSteps(JTextArea pre, JComboBox source, JComboBox b1, JComboBox b2, JComboBox b3) {
+    private static void reloadSteps() {
         lsa.Reset();
-        pre.setText("");
-        reloadNodeSelector(source);
-        reloadNodeSelector(b1);
-        reloadNodeSelector(b2);
-        reloadNodeSelector(b3);
-        lsa.setSource(getSelectedStr(source));
+        ta_step.setText("");
+        reloadNodeSelector(cb_sel_src);
+        reloadNodeSelector(cb_rmNode);
+        reloadNodeSelector(cb_rmEdge_src);
+        reloadNodeSelector(cb_rmEdge_dest);
+        lsa.setSource(getSelectedStr(cb_sel_src));
     }
 
     private static void reloadNodeSelector(JComboBox box) {
@@ -374,24 +403,15 @@ public class GUI {
                 JOptionPane.ERROR_MESSAGE);
     }
 
-    private static void enableButton(JButton button, boolean bool) {
-        button.setEnabled(bool);
-        if (bool) {
-            button.setForeground(ACTIVE);
-        } else {
-            button.setForeground(null);
-        }
-    }
-
     private static JFrame createWindow(String title, int width, int height) {
         JFrame frame = new JFrame(title);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         frame.setSize(width, height);
-        if (width <= 500 && height <= 300)
+        if (width <= 500 && height <= 400)
             frame.setMinimumSize(new Dimension(width, height));
         else
-            frame.setMinimumSize(new Dimension(500, 300));
+            frame.setMinimumSize(new Dimension(500, 400));
         frame.setLocationRelativeTo(null);
         frame.setLayout(new BorderLayout());
 
@@ -405,7 +425,7 @@ public class GUI {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception ex) {}
             mainFrame = createWindow("LSA Demo", 800, 600);
-            createContentPane();
+            initMainFrame();
         });
     }
 }
