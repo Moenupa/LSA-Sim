@@ -9,6 +9,7 @@ import java.util.Vector;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 
+import guru.nidi.graphviz.engine.Engine;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 
@@ -339,7 +340,7 @@ public class GUI {
     }
 
     private static void resetImage(ImagePanel imagePanel, String dest) {
-        BufferedImage image = Graphviz.fromGraph(lsa.draw(dest)).height(500).render(Format.SVG).toImage();
+        BufferedImage image = Graphviz.fromGraph(lsa.draw(dest)).height(500).engine(Engine.NEATO).render(Format.SVG).toImage();
         imagePanel.setImage(image);
         imagePanel.setPreferredSize(new Dimension(image.getWidth(), image.getHeight()));
     }

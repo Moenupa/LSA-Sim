@@ -75,6 +75,14 @@ public class LSA {
         "F: B:2 E:5"
     };
 
+    public LSA() {
+        var list = new ArrayList<GraphvizEngine>();
+        list.add(new GraphvizCmdLineEngine());
+        list.add(new GraphvizV8Engine());
+        list.add(new GraphvizJdkEngine());
+        Graphviz.useEngine(list);
+    }
+
     // reset source but not nodes
     public void Reset() {
         Distances.clear();
@@ -254,7 +262,6 @@ public class LSA {
     }
 
     public MutableGraph draw(String dest){//highlight the path from source to dest
-        Graphviz.useEngine(new GraphvizJdkEngine());
         var set = new HashSet<String>();
         if(dest != null&&Predecessor.get(dest)!=null){
             do {
