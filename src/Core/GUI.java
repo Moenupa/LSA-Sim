@@ -112,6 +112,7 @@ public class GUI {
         btn_step.setForeground(ACTIVE);
         btn_computeAll.setForeground(ACTIVE);
         tf_addNode.setMaximumSize(new Dimension(FIELD_LEN, 20));
+        stepImage.setBackground(Color.white);
 
         // bind with actions
         openFile.addActionListener(e -> {
@@ -129,7 +130,6 @@ public class GUI {
                 }
             });
             int option;
-            boolean loadFailed = true;
             option = fileChooser.showOpenDialog(mainFrame);
             if (option == JFileChooser.APPROVE_OPTION) {
                 file = fileChooser.getSelectedFile();
@@ -186,9 +186,12 @@ public class GUI {
                 cl.next(cards);
             else
                 createPopUpWindow(errMsg);
+
+            mainFrame.pack();
         });
         btn_back.addActionListener(e -> {
             cl.next(cards);
+            mainFrame.pack();
         });
         btn_addNode.addActionListener(e -> {
             try {
@@ -227,12 +230,14 @@ public class GUI {
                 stepPreview.append(lsa.toString() + "\n\n");
                 resetImage(stepImage, ret);
             }
+            mainFrame.pack();
         });
         btn_computeAll.addActionListener(e -> {
             lsa.Run();
             lsa.draw(null);
             stepPreview.setText(lsa.toString() + "\n\n");
             resetImage(stepImage, null);
+            mainFrame.pack();
         });
 
         // exe south group
@@ -248,6 +253,7 @@ public class GUI {
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
         );
         stepScroll.setBorder(BorderFactory.createEmptyBorder());
+        stepScroll.setPreferredSize(new Dimension(400, 400));
 
         JPanel exe_func_g = new JPanel();
         GroupLayout layout = new GroupLayout(exe_func_g);
@@ -277,8 +283,6 @@ public class GUI {
                         .addGap(5, 10, 10)
                         .addComponent(stepImage)
                         .addComponent(stepScroll)
-                        // .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                        // )
         );
         layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.CENTER)
@@ -305,8 +309,6 @@ public class GUI {
                         )
                         .addComponent(stepImage)
                         .addComponent(stepScroll)
-                        // .addGroup(layout.createSequentialGroup()
-                        // )
         );
 
         open.add(file_s_g, BorderLayout.SOUTH);
@@ -317,6 +319,7 @@ public class GUI {
         cl.show(cards, "open");
 
         mainFrame.getContentPane().add(cards);
+        mainFrame.pack();
         mainFrame.setVisible(true);
     }
 
@@ -337,8 +340,9 @@ public class GUI {
     }
 
     private static void resetImage(ImagePanel imagePanel, String dest) {
-        BufferedImage image = Graphviz.fromGraph(lsa.draw(dest)).width(300).render(Format.SVG).toImage();
+        BufferedImage image = Graphviz.fromGraph(lsa.draw(dest)).height(500).render(Format.SVG).toImage();
         imagePanel.setImage(image);
+        imagePanel.setPreferredSize(new Dimension(image.getWidth(), image.getHeight()));
     }
 
     private static String getSelectedStr(JComboBox cb) {
@@ -397,6 +401,9 @@ public class GUI {
     public static void main(String[] args) {
         lsa = new LSA();
         javax.swing.SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception ex) {}
             mainFrame = createWindow("LSA Demo", 800, 600);
             createContentPane();
         });
