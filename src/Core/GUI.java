@@ -1,17 +1,17 @@
 package Core;
 
+import guru.nidi.graphviz.engine.Engine;
+import guru.nidi.graphviz.engine.Format;
+import guru.nidi.graphviz.engine.Graphviz;
+
+import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Vector;
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
-
-import guru.nidi.graphviz.engine.Engine;
-import guru.nidi.graphviz.engine.Format;
-import guru.nidi.graphviz.engine.Graphviz;
 
 public class GUI {
 
@@ -64,8 +64,8 @@ public class GUI {
             You can edit here directly even after opening a file.
             """
     );
-    private static final JButton btn_next = new JButton("Proceed");
-    private static final JButton btn_back = new JButton("Return To File Preview");
+    private static final JButton btn_next = new JButton("Proceed to Compute");
+    private static final JButton btn_back = new JButton("Return to Preview");
 
     // dynamic network topology
     private static final JButton btn_addNode = new JButton("⊕ Node");

@@ -6,11 +6,12 @@ import guru.nidi.graphviz.attribute.Shape;
 import guru.nidi.graphviz.engine.*;
 import guru.nidi.graphviz.model.MutableGraph;
 
-import static guru.nidi.graphviz.model.Factory.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static guru.nidi.graphviz.model.Factory.mutGraph;
+import static guru.nidi.graphviz.model.Factory.mutNode;
 
 public class LSA {
 
