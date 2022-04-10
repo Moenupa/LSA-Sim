@@ -82,6 +82,7 @@ public class GUI {
     // LSR computation
     private static final JLabel lb_select = new JLabel("Select Source: ");
     private static final JComboBox<String> cb_sel_src = new JComboBox<>();
+    private static final JButton btn_reload = new JButton("Reload");
     private static final JButton btn_step = new JButton("Single Step");
     private static final JButton btn_computeAll = new JButton("Compute All");
 
@@ -108,12 +109,14 @@ public class GUI {
         btn_addNode.setMinimumSize(new Dimension(KEY_WIDTH, 0));
         btn_rmNode.setMinimumSize(new Dimension(KEY_WIDTH, 0));
         btn_rmEdge.setMinimumSize(new Dimension(KEY_WIDTH, 0));
+        btn_reload.setMinimumSize(new Dimension(KEY_WIDTH + FIELD_WIDTH, 0));
         btn_step.setMinimumSize(new Dimension(KEY_WIDTH + FIELD_WIDTH, 0));
         btn_computeAll.setMinimumSize(new Dimension(KEY_WIDTH + FIELD_WIDTH, 0));
         btn_back.setForeground(WARN);
         btn_addNode.setForeground(MOD);
         btn_rmNode.setForeground(MOD);
         btn_rmEdge.setForeground(MOD);
+        btn_reload.setForeground(ACTIVE);
         btn_step.setForeground(ACTIVE);
         btn_computeAll.setForeground(ACTIVE);
 
@@ -209,6 +212,7 @@ public class GUI {
                 lsa.parseLine(tf_addNode.getText());
                 blink(btn_addNode, PASS, MOD);
                 reloadSteps();
+                setBlankImage();
             } catch (Exception ex) {
                 blink(btn_rmEdge, ERROR, MOD);
                 createPopUpWindow(ex.getMessage());
@@ -218,6 +222,7 @@ public class GUI {
             lsa.RemoveNode(getSelectedStr(cb_rmNode));
             blink(btn_rmNode, PASS, MOD);
             reloadSteps();
+            setBlankImage();
         });
         btn_rmEdge.addActionListener(e -> {
             try {
@@ -227,6 +232,7 @@ public class GUI {
                 );
                 blink(btn_rmEdge, PASS, MOD);
                 reloadSteps();
+                setBlankImage();
             } catch (Exception ex) {
                 blink(btn_rmEdge, ERROR, MOD);
                 createPopUpWindow(ex.getMessage());
@@ -235,6 +241,10 @@ public class GUI {
         cb_sel_src.addActionListener(e -> {
             lsa.setSource(getSelectedStr(cb_sel_src));
             ta_step.setText("");
+        });
+        btn_reload.addActionListener(e -> {
+            reloadSteps();
+            setBlankImage();
         });
         btn_step.addActionListener(e -> {
             String ret = lsa.SingleStep();
@@ -288,6 +298,7 @@ public class GUI {
                                                         .addComponent(cb_rmEdge_dest)
                                                 )
                                                 .addComponent(cb_sel_src)))
+                                .addComponent(btn_reload)
                                 .addComponent(btn_step)
                                 .addComponent(btn_computeAll))
                         .addGap(5, 10, 10)
@@ -315,6 +326,7 @@ public class GUI {
                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                         .addComponent(lb_select)
                                         .addComponent(cb_sel_src))
+                                .addComponent(btn_reload)
                                 .addComponent(btn_step)
                                 .addComponent(btn_computeAll)
                                 .addGap(5,10,10)
