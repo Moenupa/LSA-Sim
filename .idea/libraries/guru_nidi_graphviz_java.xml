@@ -10,7 +10,7 @@
       <root url="jar://$PROJECT_DIR$/lib/jsr305-3.0.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/jcl-over-slf4j-1.7.30.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/jul-to-slf4j-1.7.30.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/j2v8_win32_x86_64-4.6.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/j2v8_macosx_x86_64-4.6.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/slf4j-api-1.7.30.jar!/" />
     </CLASSES>
     <JAVADOC>
